@@ -1,5 +1,7 @@
 var createError = require("http-errors");
 var express = require("express");
+var cors = require('cors')
+
 const mongoose = require("mongoose");
 require("dotenv").config();
 const expressValidator = require("express-validator");
@@ -11,6 +13,7 @@ var logger = require("morgan");
 var path = require("path");
 
 var app = express();
+app.use(cors())
 
 app.use(bodyParser.urlencoded({ extended: false }));
 

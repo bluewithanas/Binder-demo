@@ -12,6 +12,7 @@ router.post("/register", async (req, res) => {
   try {
     await Authcontroller.register(req, res);
   } catch (err) {
+    console.log(err)
     res.status(400).json(err);
   }
 });
@@ -21,12 +22,8 @@ router.post("/register", async (req, res) => {
 //@desc test route for auth routes
 //@access public
 
-router.get("/test", async (req, res) => {
-  try {
-    await Authcontroller.test(req, res);
-  } catch (err) {
-    res.status(400).json(err);
-  }
+router.get("/test",(req, res) => {
+  return res.status(200).json({msg: ' working'})
 });
 
 //@type get

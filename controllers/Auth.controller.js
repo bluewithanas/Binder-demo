@@ -7,10 +7,19 @@ const transporter = require("../setup/mailTransporter");
 const jsonwt = require("jsonwebtoken");
 const { secret } = require("../setup/mongourl");
 const passport = require("passport");
-const passregex =
-  /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
-const emailregex =
-  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const { emailregex, passregex } = require("./Utils/validators");
+
+function EmailValidator(email) {
+  return emailregex.test(String(email));
+}
+
+function PasswordValidator(password) {
+  return passregex.test(String(password));
+}
+
+function passwordMatcher(password, confirmPassword) {
+  return password === confirmPassword;
+}
 
 Authcontroller.register = async (req, res) => {
   const {
@@ -21,26 +30,25 @@ Authcontroller.register = async (req, res) => {
   } = req.body || {};
 
   if (!name || !email || !password || !confirmPassword) {
-    return res.status(400).json("All fields are mandatory to fill!");
+    return res.status(400).json({msg: "All fields are mandatory to fill!"});
   }
 
-  if (!emailregex.test(String(email))) {
-    return res.status(400).json("Please enter a valid email");
+  if (!EmailValidator(email)) {
+    return res.status(400).json({msg:"Please enter a valid email" });
   }
 
-  if (!passregex.test(String(password))) {
-    return res.status(400).json("Please enter a Strong password");
+  if (!PasswordValidator(password)) {
+    return res.status(400).json({msg: "Please enter a Strong password" });
   }
 
-  if (password !== confirmPassword) {
-    return res.status(400).json("Passwords doesnt match");
+  if (!passwordMatcher(password, confirmPassword)) {
+    return res.status(400).json( {msg: "Passwords doesnt match" } );
   }
 
   UserModal.findOne({ email: email })
     .then((user) => {
       if (user) {
-        console.log(user);
-        return res.status(400).json("Email already registered");
+        return res.status(400).json({msg: "email already exists" });
       } else {
         const newUser = new UserModal({
           name: name,
@@ -84,31 +92,34 @@ Authcontroller.register = async (req, res) => {
                               "\n\nThank You!\n",
                           };
 
-                          transporter.sendMail(mailOptions, function (err) {
-                            if (err) {
-                              return res.status(500).send({
-                                msg: "Technical Issue!, Please click on resend for verify your Email.",
-                              });
-                            } else {
+                          transporter
+                            .sendMail(mailOptions)
+                            .then((response) => {
                               return res
                                 .status(200)
-                                .json({ msg: "Verification Link sent" });
-                            }
-                          });
+                                .json({ msg: "Verification link sent" });
+                            })
+                            .catch((err) => {
+                              res.status(500).json({ msg: err });
+                            });
                         })
                         .catch((err) => {
                           res.status(500).json({ msg: err });
                         });
                     }
                   })
-                  .catch((err) => res.status(500).json({ msg: err }));
+                  .catch((err) => {
+                    res.status(500).json({ msg: err });
+                  });
               })
-              .catch((err) => res.status(500).json(err));
+              .catch((err) => {
+                res.status(500).json(err);
+              });
           });
         });
       }
 
-      //return res.status(400).json('Email already registered');
+      //return res.status(400).json({msg:'email already registered'});
     })
     .catch((err) => res.status(500).json(err));
 };
@@ -148,7 +159,7 @@ Authcontroller.mailVerification = (req, res) => {
 };
 
 Authcontroller.login = (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
   UserModal.findOne({ email: email })
     .then((user) => {
       if (!user) {
@@ -165,18 +176,20 @@ Authcontroller.login = (req, res) => {
               id: user._id,
               name: user.name,
               email: user.email,
+              first_login: user.first_login
             };
 
             jsonwt.sign(payload, secret, { expiresIn: 3600 }, (err, token) => {
               res.json({
                 success: true,
                 token: token,
+
               });
             });
           } else {
             return res
               .status(400)
-              .json({ passworderror: "login error password incorrect" });
+              .json({ msg: "login error password incorrect" });
           }
         })
         .catch((err) => {
@@ -188,4 +201,11 @@ Authcontroller.login = (req, res) => {
     });
 };
 
-module.exports = Authcontroller;
+module.exports = {
+  
+  EmailValidator,
+  passwordMatcher,
+  PasswordValidator,
+};
+
+module.exports=Authcontroller;
