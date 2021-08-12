@@ -24,7 +24,9 @@ app.use(passport.initialize());
 require("./strategies/jsonwtstrategies")(passport);
 
 var Authrouter = require("./routes/auth.routes");
+var UserInfoRouter=require('./routes/userinfo.routes');
 app.use("/auth", Authrouter);
+app.use('/', UserInfoRouter);
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
