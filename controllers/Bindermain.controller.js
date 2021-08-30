@@ -113,42 +113,76 @@ MatchEmitter.on("match_found", (u_id, p_id, res) => {
 
 Maincontroller.getAllUser = async (req, res) => {
   //help required, to query in matches collection via pid to check friendship exists between uid and pid or not.
-  await Userinfo.aggregate([
-    {
-      $lookup: {
-        from: "users",
-        localField: "userId",
-        foreignField: "_id",
-        as: "newDocs",
-      },
-    },
-  ]).exec((err, result) => {
-    if (err) {
-      return res.status(400).json(err);
-    }
 
-    let payload = [];
-
-    result.map((key, index) => {
-      let age = _calculateAge(key.dob);
-      let doc = {
-        userId: key.userId,
-        age: age,
-        location: key.location,
-        book_list: key.book_list,
-        interest: key.interest,
-        book_offering: key.book_offering,
-        fav_quote: key.fav_quote,
-        social_url: key.social_url,
-        name: key.newDocs[0].name,
-        email: key.newDocs[0].email,
-      };
-
-      payload.push(doc);
-    });
-
-    return res.status(200).json(payload);
+  response.writeHead(200, {
+    Connection: "keep-alive",
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache"
   });
+
+
+  const { uid } = req.params;
+  console.log(uid);
+  await MatchModal.findOne({ u_id: mongoose.Types.ObjectId(uid) })
+    .then(async (response) => {
+      console.log(response);
+      let friendids = [];
+
+      //  // if (response) {
+
+      response?.matches.map((key) => {
+        friendids.push(key.p_id.toString());
+      });
+
+      console.log(friendids, "friend ids are here");
+
+      await Userinfo.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "newDocs",
+          },
+        },
+      ]).exec((err, result) => {
+        if (err) {
+          return res.status(400).json(err);
+        }
+
+        let payload = [];
+        console.log(friendids.includes("61178a682413fca6949e117e"));
+        result.map((key, index) => {
+          if (
+            !friendids.includes(key.userId.toString()) &&
+            uid.toString() !== key.userId.toString()
+          ) {
+            let age = _calculateAge(key.dob);
+            let doc = {
+              userId: key.userId,
+              age: age,
+              location: key.location,
+              book_list: key.book_list,
+              interest: key.interest,
+              book_offering: key.book_offering,
+              fav_quote: key.fav_quote,
+              social_url: key.social_url,
+              name: key.newDocs[0].name,
+              email: key.newDocs[0].email,
+            };
+
+            payload.push(doc);
+          }
+        });
+
+        // return res.status(200).json(payload);
+      });
+      //}
+    })
+    .catch((err) => {
+      console.log(err);
+      return res.status(400).json(err);
+    });
 };
 
 // Maincontroller.getAllUser = async (req, res) => {

@@ -29,7 +29,11 @@ Binder uses a number of open source projects to work properly:
 
 Install the dependencies and devDependencies and start the server.
 
-Make a .env file in root and enter the info.
+Make a .env file in the root with:
+
+```sh
+cp .env{.sample,}
+```
 ## Backend
 ```sh
 Navigate to root directory of the project after cloning.
