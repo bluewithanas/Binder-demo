@@ -9,12 +9,23 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { route } from "next/dist/next-server/server/router";
 import router from "next/router";
+import hobbies from "../../Components/LandingPage/hobbies.json";
+import MenuBookIcon from "@material-ui/icons/MenuBook";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
+import books from "../../Components/LandingPage/books.json";
+import Chip from "@material-ui/core/Chip";
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    "& > *": {
-      margin: theme.spacing(1),
-    },
+  formControl: {
+    margin: theme.spacing(1),
+    minWidth: 120,
+  },
+  selectEmpty: {
+    marginTop: theme.spacing(2),
   },
 }));
 
@@ -22,6 +33,7 @@ export default function index() {
   const { GlobalState, setGlobalState } = useContext(AppContext);
 
   useEffect(() => {
+    console.log(GlobalState);
     setToken(localStorage.getItem("token"));
   }, []);
 
@@ -29,20 +41,56 @@ export default function index() {
 
   const [Formdata, setFormdata] = useState({
     userId: GlobalState.id,
+    email: GlobalState.email,
   });
   const [Token, setToken] = useState("");
+  const [Booklist, setBooklist] = useState([]);
+  const [Interest, setInterest] = useState([]);
+  const [BookOffering, setBookOffering] = useState();
   const handleFormData = (e) => {
     let { name, value } = e.target;
 
-    setFormdata((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    if (name === "book_list") {
+      let list = [...Booklist];
+
+      list.push(value);
+
+      setBooklist(list);
+
+      setFormdata((prevState) => ({
+        ...prevState,
+        [name]: list,
+      }));
+    } else if (name === "interest") {
+      let list = [...Interest];
+
+      list.push(value);
+
+      setInterest(list);
+
+      setFormdata((prevState) => ({
+        ...prevState,
+        [name]: list,
+      }));
+    } else if (name === "book_offering") {
+      setBookOffering(value);
+
+      setFormdata((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    } else {
+      setFormdata((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log(Formdata);
+    console.log(Token);
     await axios({
       method: "post",
       url: `${BASE_URL}userinfo`,
@@ -52,16 +100,18 @@ export default function index() {
       },
     })
       .then((response) => {
+        console.log("response is here");
         console.log(response);
         if (response.status === 200) {
           toast.success("Submitted successfully");
           setTimeout(() => {
-            router.push("/Homepage");
+            router.push("/main");
           }, 2000);
         }
       })
       .catch((err) => {
-        toast.error(err.response.data?.msg._message);
+        console.log(err);
+        toast.error(err.response?.data?.msg._message);
       });
   };
 
@@ -69,7 +119,7 @@ export default function index() {
     <Container>
       <h2>Please enter details</h2>
 
-      <FormContainer className={classes.root} noValidate autoComplete="off">
+      <FormContainer noValidate autoComplete="off">
         <FormDiv>
           <>
             <h3>DOB</h3>
@@ -93,34 +143,99 @@ export default function index() {
         </FormDiv>
 
         <FormDiv>
+          <ListContainer>
+            {Booklist.map((key) => {
+              return (
+                <Chip
+                  avatar={<MenuBookIcon />}
+                  label={key}
+                  // onDelete={handleDelete}
+                />
+              );
+            })}
+          </ListContainer>
+
+          <ListContainer>
+            {Interest.map((key) => {
+              return (
+                <Chip
+                  avatar={<MenuBookIcon />}
+                  label={key}
+                  // onDelete={handleDelete}
+                />
+              );
+            })}
+          </ListContainer>
+
+          <ListContainer>
+            {BookOffering ? (
+              <Chip
+                avatar={<MenuBookIcon />}
+                label={BookOffering}
+                // onDelete={handleDelete}
+              />
+            ) : (
+              " "
+            )}
+          </ListContainer>
+        </FormDiv>
+
+        <FormDiv>
           <>
-            <InputField
-              type="text"
-              label="Faviorite book"
-              id="outlined-basic"
-              variant="outlined"
-              name="fav_book"
-              onChange={(e) => handleFormData(e)}
-            />
+            <FormControl className={classes.formControl}>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                name="book_list"
+                onChange={(e) => handleFormData(e)}
+              >
+                {books.map((key, index) => {
+                  return (
+                    <MenuItem key={index} value={key.title}>
+                      {key.title}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+              <FormHelperText>Select your Faviorite Books</FormHelperText>
+            </FormControl>
           </>
 
-          <InputField
-            type="text"
-            id="outlined-basic"
-            label="Interest"
-            variant="outlined"
-            onChange={(e) => handleFormData(e)}
-            name="interest"
-          />
+          <FormControl className={classes.formControl}>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              onChange={(e) => handleFormData(e)}
+              name="interest"
+            >
+              {hobbies.map((key, index) => {
+                return (
+                  <MenuItem key={index} value={key.title}>
+                    {key.title}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+            <FormHelperText>Select your hobbies</FormHelperText>
+          </FormControl>
 
-          <InputField
-            type="text"
-            id="outlined-basic"
-            label="book offering"
-            variant="outlined"
-            onChange={(e) => handleFormData(e)}
-            name="book_offering"
-          />
+          <FormControl className={classes.formControl}>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              onChange={(e) => handleFormData(e)}
+              name="book_offering"
+            >
+              {books.map((key, index) => {
+                return (
+                  <MenuItem key={index} value={key.title}>
+                    {key.title}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+            <FormHelperText>Select book you are offering</FormHelperText>
+          </FormControl>
         </FormDiv>
 
         <FormDiv>
@@ -200,6 +315,10 @@ const SubmitButton = styled.a`
   box-shadow: 22px 22px 44px #7d7d7d, -22px -22px 44px #ffffff;
   height: 10vh;
   width: 30vh;
+`;
+
+const ListContainer = styled.div`
+  display: flex;
 `;
 
 const ButtonText = styled.h4``;

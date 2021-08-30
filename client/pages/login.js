@@ -60,9 +60,8 @@ export default function login() {
         if (tokenData.first_login) {
           router.push("/profile");
         } else {
-          router.push("/Homepage");
+          router.push("/main");
         }
-
       })
       .catch((err) => {
         toast.error(err?.response?.data?.msg);
