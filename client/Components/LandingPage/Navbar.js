@@ -25,7 +25,8 @@ export default Navbar;
 
 const Container = styled.div`
   display: flex;
-  background: #63a2ed;
+  background: linear-gradient(to right, #d4d3e6, #64a1ed) ;
+;
   position: sticky;
   justify-content: space-between;
   align-items: center;
