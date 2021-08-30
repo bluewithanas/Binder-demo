@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 import Carousel from "react-material-ui-carousel";
 import axios from "axios";
 import { BASE_URL } from "../../../config";
 import UserCard from "./UserCard";
+import { AppContext } from "../../../Context/State"
+
 export default function Bodymain() {
   const [Users, setUsers] = useState([]);
+  const { GlobalState, setGlobalState } = useContext(AppContext);
+
 
   useEffect(() => {
+    console.log(GlobalState.id, 'id is here')
     axios({
-      url: `${BASE_URL}getusers`,
+      url: `${BASE_URL}getusers/${GlobalState.id}`,
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,

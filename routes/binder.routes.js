@@ -9,12 +9,13 @@ const Maincontroller = require("../controllers/Bindermain.controller");
 //@access private
 
 router.get(
-  "/getusers",
+  "/getusers/:uid",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
     try {
       Maincontroller.getAllUser(req, res);
     } catch (err) {
+      console.log(err)
       return res.status(500).json(err);
     }
   }
