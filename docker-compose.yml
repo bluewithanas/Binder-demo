@@ -1,0 +1,22 @@
+version: '2'
+services:
+  web:
+    build: .
+    command: npx nodemon
+    container_name: binder-app
+    volumes:
+      - .:/usr/app/
+      - /usr/app/node_modules
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    environment:
+      DATABASE_URL: mongodb://mongo-api-binder:27017/Binder
+  mongo:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    container_name: mongo-api-binder
+    volumes:
+      - ./data
