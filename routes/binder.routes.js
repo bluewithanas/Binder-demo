@@ -15,7 +15,7 @@ router.get(
     try {
       Maincontroller.getAllUser(req, res);
     } catch (err) {
-      console.log(err)
+      console.log(err);
       return res.status(500).json(err);
     }
   }
@@ -122,6 +122,24 @@ router.delete(
   async (req, res) => {
     try {
       await Maincontroller.deleteFriend(req, res);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    }
+  }
+);
+
+//@type delete
+//@route /removefriend/:uid/:pid
+//@desc deletes the a friend (pid) of a user (uid).
+//@access private
+
+router.delete(
+  "/removefriend/:uid/:pid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    try {
+      await Maincontroller.removeFriend(req, res);
     } catch (err) {
       console.log(err);
       return res.status(500).json(err);
