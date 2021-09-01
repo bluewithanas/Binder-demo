@@ -123,21 +123,21 @@ export default function Sidebar() {
     }
   }, [listening, MatchData]);
 
-  const handleLogout=e=>{
-    localStorage.removeItem('token');
-    setGlobalState(prevState=>({
+  const handleLogout = (e) => {
+    localStorage.removeItem("token");
+    setGlobalState((prevState) => ({
       ...prevState,
       name: null,
       email: null,
-      id: null
-    }))
-    router.push('/');
-  }
+      id: null,
+    }));
+    router.push("/");
+  };
 
   return (
     <Container>
       <Header>
-        <UserAvatar onClick={(e)=>handleLogout(e)} />
+        <UserAvatar onClick={(e) => handleLogout(e)} />
 
         <IconsContainer>
           <IconButton>

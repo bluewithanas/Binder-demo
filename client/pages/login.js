@@ -57,6 +57,10 @@ export default function login() {
           id: tokenData.id,
         }));
 
+        localStorage.setItem("name", tokenData.name);
+        localStorage.setItem("email", tokenData.email);
+        localStorage.setItem("id", tokenData.id);
+
         if (tokenData.first_login) {
           router.push("/profile");
         } else {

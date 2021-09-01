@@ -112,18 +112,9 @@ MatchEmitter.on("match_found", (u_id, p_id, res) => {
 ///
 
 Maincontroller.getAllUser = async (req, res) => {
-  //help required, to query in matches collection via pid to check friendship exists between uid and pid or not.
-
-  response.writeHead(200, {
-    Connection: "keep-alive",
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache"
-  });
-
-
   const { uid } = req.params;
   console.log(uid);
-  await MatchModal.findOne({ u_id: mongoose.Types.ObjectId(uid) })
+  await MatchModal.findOne({ u_id: uid })
     .then(async (response) => {
       console.log(response);
       let friendids = [];
@@ -175,7 +166,7 @@ Maincontroller.getAllUser = async (req, res) => {
           }
         });
 
-        // return res.status(200).json(payload);
+        return res.status(200).json(payload);
       });
       //}
     })
@@ -184,106 +175,6 @@ Maincontroller.getAllUser = async (req, res) => {
       return res.status(400).json(err);
     });
 };
-
-// Maincontroller.getAllUser = async (req, res) => {
-//   //help required, to query in matches collection via pid to check friendship exists between uid and pid or not.
-//   await Userinfo.aggregate([
-//     {
-//       $lookup: {
-//         from: "users",
-//         localField: "userId",
-//         foreignField: "_id",
-//         as: "string",
-//       },
-//     },
-
-//     {
-//       $unwind: {
-//         path: "$string",
-//       },
-//     },
-
-//     {
-//       $project: {
-//         _v: 0,
-//         "string.password": 0,
-//         "string.verified": 0,
-//         "string.first_login": 0,
-//       },
-//     },
-//     {
-//       $replaceRoot: {
-//         newRoot: {
-//           $mergeObjects: ["$$ROOT", "$string"],
-//         },
-//       },
-//     },
-
-//     {
-//       $project: {
-//         string: 0,
-//       },
-//     },
-
-// //     {
-// //       $lookup: {
-// //         from: "matches",
-// //         localField: "userId",
-// //         foreignField: "u_id",
-// //         as: "matches",
-// //       },
-// //     },
-
-// //  {
-
-// //  }
-
-//     // {
-//     //   $unwind: {
-//     //     path: "$matches",
-//     //   },
-//     // },
-
-//     // {
-//     //   $replaceRoot: {
-//     //     newRoot: {
-//     //       $mergeObjects: ["$$ROOT", "$matches"],
-//     //     },
-//     //   },
-//     // },
-//   ]).exec((err, result) => {
-//     if (err) {
-//       console.log(err);
-//       return res.status(400).json(err);
-//     }
-
-//     return res.status(200).json(result);
-
-//     // let payload = [];
-
-//     // result.map((key, index) => {
-//     //   let age = _calculateAge(key.dob);
-//     //   let doc = {
-//     //     userId: key.userId,
-//     //     age: age,
-//     //     location: key.location,
-//     //     fav_book: key.fav_book,
-//     //     interest: key.interest,
-//     //     book_offering: key.book_offering,
-//     //     fav_quote: key.fav_quote,
-//     //     social_url: key.social_url,
-//     //     name: key.newDocs[0].name,
-//     //     email: key.newDocs[0].email,
-//     //   };
-
-//     //   payload.push(doc);
-//     // });
-
-//     // return res.status(200).json(payload);
-//   });
-// };
-
-///
 
 Maincontroller.connectUser = async (req, res) => {
   let u_id = req.params.userid;
@@ -369,7 +260,65 @@ Maincontroller.acceptRequest = async (req, res) => {
               .then((response) => {
                 MatchEmitter.emit("request_accepted", uid, pid, res);
 
-                return res.status(200).json(response);
+                MatchModal.findOne({ u_id: pid })
+                  .then((res) => {
+                    if (!res) {
+                      UserModal.findOne({ _id: uid })
+                        .then((data) => {
+                          const newFriend = new MatchModal({
+                            u_id: pid,
+                            matches: [
+                              {
+                                p_id: uid,
+                                status: true,
+                                name: data.name,
+                                email: data.email,
+                              },
+                            ],
+                          });
+
+                          newFriend
+                            .save()
+                            .then((ans) => {
+                              console.log(ans);
+                              return res.status(200).json(response);
+                            })
+                            .catch((err) => {
+                              return res.status(400).json(err);
+                            });
+                        })
+                        .catch((err) => {
+                          return res.status(400).json(err);
+                        });
+                    } else {
+                      UserModal.findOne({ _id: uid })
+                        .then((ans) => {
+                          let doc = {
+                            p_id: uid,
+                            status: true,
+                            name: ans.name,
+                            email: ans.email,
+                          };
+
+                          res?.matches.push(doc);
+
+                          res
+                            .save()
+                            .then((result) => {
+                              return res.status(200).json(result);
+                            })
+                            .catch((err) => {
+                              return res.status(400).json(err);
+                            });
+                        })
+                        .catch((err) => {
+                          return res.status(400).json(err);
+                        });
+                    }
+                  })
+                  .catch((err) => {
+                    return res.status(400).json(err);
+                  });
               })
               .catch((err) => {
                 console.log(err);
@@ -475,6 +424,36 @@ Maincontroller.getUserInfo = async (req, res) => {
     .then((response) => {
       console.log(response);
       return res.status(200).json(response);
+    })
+    .catch((err) => {
+      console.log(err);
+      return res.status(400).json(err);
+    });
+};
+//
+
+Maincontroller.removeFriend = async (req, res) => {
+  const { uid, pid } = req.params;
+  console.log(uid, pid);
+  await MatchModal.findOne({ u_id: uid })
+    .then((user) => {
+      console.log(user);
+      if (user) {
+        user.matches = user?.matches.filter(function (key) {
+          return !mongoose.Types.ObjectId(pid).equals(key.p_id);
+        });
+
+        user
+          .save()
+          .then((result) => {
+            console.log(result);
+            return res.status(200).json(result);
+          })
+          .catch((err) => {
+            console.log(err);
+            return res.status(400).json(err);
+          });
+      }
     })
     .catch((err) => {
       console.log(err);

@@ -4,29 +4,31 @@ import Carousel from "react-material-ui-carousel";
 import axios from "axios";
 import { BASE_URL } from "../../../config";
 import UserCard from "./UserCard";
-import { AppContext } from "../../../Context/State"
+import { AppContext } from "../../../Context/State";
 
 export default function Bodymain() {
   const [Users, setUsers] = useState([]);
   const { GlobalState, setGlobalState } = useContext(AppContext);
 
-
   useEffect(() => {
-    console.log(GlobalState.id, 'id is here')
-    axios({
-      url: `${BASE_URL}getusers/${GlobalState.id}`,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
-      .then((response) => {
-        console.log(response, "get users information here");
-        setUsers(response.data);
+    console.log(GlobalState.id, "id is here");
+
+    setInterval(() => {
+      axios({
+        url: `${BASE_URL}getusers/${GlobalState.id}`,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       })
-      .catch((err) => {
-        console.log(err);
-      });
+        .then((response) => {
+          console.log(response, "get users information here");
+          setUsers(response.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }, 3000);
   }, []);
 
   return (

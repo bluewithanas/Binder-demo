@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Modal from "@material-ui/core/Modal";
 import Backdrop from "@material-ui/core/Backdrop";
@@ -6,6 +6,8 @@ import Fade from "@material-ui/core/Fade";
 import { BASE_URL } from "../../../config";
 import axios from "axios";
 import Divider from "@material-ui/core/Divider";
+import Button from "@material-ui/core/Button";
+import { AppContext } from "../../../Context/State";
 
 const useStyles = makeStyles((theme) => ({
   modal: {
@@ -27,6 +29,7 @@ export default function InfoModal({ pid, open, setOpen, name }) {
   const classes = useStyles();
 
   const [Data, setData] = useState(null);
+  const { GlobalState, setGlobalState } = useContext(AppContext);
 
   const handleClose = () => {
     setOpen(false);
@@ -56,6 +59,24 @@ export default function InfoModal({ pid, open, setOpen, name }) {
         console.log(err);
       });
   }, []);
+
+  const removeFriend = async (e, pid) => {
+    e.preventDefault();
+    console.log('i am going to remove the friend')
+   await  axios({
+      url: `${BASE_URL}removefriend/${GlobalState.id}/${pid}`,
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }).then(response=>{
+      console.log('i remove friend here')
+      console.log(response);
+      
+    }).catch(err=>{
+      console.log(err);
+    })
+  };
 
   return (
     <div>
@@ -97,6 +118,14 @@ export default function InfoModal({ pid, open, setOpen, name }) {
             >
               Link to social profile
             </a>
+            {"       "}{" "}
+            <Button
+              onClick={(e) => removeFriend(e, pid)}
+              variant="outlined"
+              color="secondary"
+            >
+              Remove Friend
+            </Button>
           </div>
         </Fade>
       </Modal>
