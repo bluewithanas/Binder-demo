@@ -119,8 +119,6 @@ Maincontroller.getAllUser = async (req, res) => {
       console.log(response);
       let friendids = [];
 
-      //  // if (response) {
-
       response?.matches.map((key) => {
         friendids.push(key.p_id.toString());
       });
@@ -246,7 +244,6 @@ Maincontroller.connectUser = async (req, res) => {
 
 Maincontroller.acceptRequest = async (req, res) => {
   const { uid, pid } = req.params;
-  console.log(uid, pid);
 
   await MatchModal.findOne({ u_id: uid })
     .then((user) => {
@@ -280,7 +277,6 @@ Maincontroller.acceptRequest = async (req, res) => {
                           newFriend
                             .save()
                             .then((ans) => {
-                              console.log(ans);
                               return res.status(200).json(response);
                             })
                             .catch((err) => {
@@ -321,7 +317,6 @@ Maincontroller.acceptRequest = async (req, res) => {
                   });
               })
               .catch((err) => {
-                console.log(err);
                 return res.status(400).json(err);
               });
           }
@@ -419,10 +414,8 @@ Maincontroller.deleteFriend = async (req, res) => {
 //
 Maincontroller.getUserInfo = async (req, res) => {
   const { pid } = req.params;
-  console.log(pid);
   await Userinfo.findOne({ userId: pid })
     .then((response) => {
-      console.log(response);
       return res.status(200).json(response);
     })
     .catch((err) => {
@@ -434,7 +427,6 @@ Maincontroller.getUserInfo = async (req, res) => {
 
 Maincontroller.removeFriend = async (req, res) => {
   const { uid, pid } = req.params;
-  console.log(uid, pid);
   await MatchModal.findOne({ u_id: uid })
     .then((user) => {
       console.log(user);
@@ -446,17 +438,14 @@ Maincontroller.removeFriend = async (req, res) => {
         user
           .save()
           .then((result) => {
-            console.log(result);
             return res.status(200).json(result);
           })
           .catch((err) => {
-            console.log(err);
             return res.status(400).json(err);
           });
       }
     })
     .catch((err) => {
-      console.log(err);
       return res.status(400).json(err);
     });
 };
