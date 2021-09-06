@@ -94,7 +94,6 @@ export default function Sidebar() {
           },
         })
           .then((response) => {
-            console.log(response.data);
             setMatchData(response.data);
           })
           .catch((err) => {
@@ -111,7 +110,6 @@ export default function Sidebar() {
           },
         })
           .then((response) => {
-            console.log(response.data);
             setFriendsData(response.data);
           })
           .catch((err) => {
@@ -123,15 +121,44 @@ export default function Sidebar() {
     }
   }, [listening, MatchData]);
 
-  const handleLogout = (e) => {
+  const handleLogout = async(e) => {
+
+
+await axios({
+  url:`${BASE_URL}logout/${GlobalState.id}`,
+  method: 'GET',
+  headers:{
+    Authorization: `Bearer ${localStorage.getItem("token")}`
+  }
+})
+.then(response=>{
+  console.log(response);
+  if(response.data.result===1){
     localStorage.removeItem("token");
-    setGlobalState((prevState) => ({
-      ...prevState,
-      name: null,
-      email: null,
-      id: null,
-    }));
-    router.push("/");
+    localStorage.removeItem("name");
+    localStorage.removeItem('id');
+    localStorage.removeItem('email')
+
+setGlobalState((prevState) => ({
+  ...prevState,
+  name: null,
+  email: null,
+  id: null,
+}));
+
+router.push("/");
+  }
+
+})
+.catch(err=>{
+  console.log(err);
+})
+
+
+
+
+
+    
   };
 
   return (
@@ -166,12 +193,12 @@ export default function Sidebar() {
           onChangeIndex={handleChangeIndex}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
-            {MatchData.map((key) => (
+            {  MatchData.length===0 ? <p>No invites :( </p> :    MatchData.map((key) => (
               <MatchButton key={key.p_id} pid={key.p_id} name={key.name} />
             ))}
           </TabPanel>
           <TabPanel value={value} index={1} dir={theme.direction}>
-            {FriendsData.map((key) => (
+            { FriendsData.length===0 ?  <p>Don't be an introvert, Add some friends!</p> :  FriendsData.map((key) => (
               <FriendsButton key={key.p_id} pid={key.p_id} name={key.name} />
             ))}
           </TabPanel>
