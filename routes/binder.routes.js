@@ -147,4 +147,24 @@ router.delete(
   }
 );
 
+//@type get
+//@route /logout/:uid
+//@desc handles the logout by unlinking the cache from redis instance
+//@access private
+
+router.get(
+  "/logout/:uid",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    try {
+      await Maincontroller.logout(req, res);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    }
+  }
+);
+
+
+
 module.exports = router;

@@ -21,6 +21,16 @@ function passwordMatcher(password, confirmPassword) {
   return password === confirmPassword;
 }
 
+const SibApiV3Sdk = require("sib-api-v3-sdk");
+let defaultClient = SibApiV3Sdk.ApiClient.instance;
+
+let apiKey = defaultClient.authentications["api-key"];
+apiKey.apiKey = process.env.SIB_APIKEY;
+
+let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
 Authcontroller.register = async (req, res) => {
   const {
     name = "",
@@ -30,25 +40,25 @@ Authcontroller.register = async (req, res) => {
   } = req.body || {};
 
   if (!name || !email || !password || !confirmPassword) {
-    return res.status(400).json({msg: "All fields are mandatory to fill!"});
+    return res.status(400).json({ msg: "All fields are mandatory to fill!" });
   }
 
   if (!EmailValidator(email)) {
-    return res.status(400).json({msg:"Please enter a valid email" });
+    return res.status(400).json({ msg: "Please enter a valid email" });
   }
 
   if (!PasswordValidator(password)) {
-    return res.status(400).json({msg: "Please enter a Strong password" });
+    return res.status(400).json({ msg: "Please enter a Strong password" });
   }
 
   if (!passwordMatcher(password, confirmPassword)) {
-    return res.status(400).json( {msg: "Passwords doesnt match" } );
+    return res.status(400).json({ msg: "Passwords doesnt match" });
   }
 
   UserModal.findOne({ email: email })
     .then((user) => {
       if (user) {
-        return res.status(400).json({msg: "email already exists" });
+        return res.status(400).json({ msg: "email already exists" });
       } else {
         const newUser = new UserModal({
           name: name,
@@ -75,33 +85,45 @@ Authcontroller.register = async (req, res) => {
                       newTokenModal
                         .save()
                         .then((response) => {
-                          const mailOptions = {
-                            from: process.env.EMAIL,
-                            to: person.email,
-                            subject: "Email Verification",
-                            text:
-                              "Hello " +
-                              person.name +
-                              ",\n\n" +
-                              "Please verify your account by clicking the link: \nhttp://" +
+                          sendSmtpEmail.sender = {
+                            name: "Binder",
+                            email: "binderofficialind@gmail.com",
+                          };
+                          sendSmtpEmail.to = [
+                            {
+                              email: person.email,
+                              name: person.name,
+                            },
+                          ];
+
+                          sendSmtpEmail.params = {
+                            FIRSTNAME: person.name,
+                            VERIFICATION_LINK:
+                              "\nhttp://" +
                               req.headers.host +
                               "/auth/confirmation/" +
                               person.email +
                               "/" +
-                              response.token +
-                              "\n\nThank You!\n",
+                              response.token,
                           };
+                          sendSmtpEmail.templateId = 7;
 
-                          transporter
-                            .sendMail(mailOptions)
-                            .then((response) => {
+                          apiInstance.sendTransacEmail(sendSmtpEmail).then(
+                            function (data) {
+                              console.log(
+                                "API called successfully. Returned data: " +
+                                  JSON.stringify(data)
+                              );
+
                               return res
                                 .status(200)
                                 .json({ msg: "Verification link sent" });
-                            })
-                            .catch((err) => {
-                              res.status(500).json({ msg: err });
-                            });
+                            },
+                            function (error) {
+                              console.error(error);
+                              return JSON.stringify(error);
+                            }
+                          );
                         })
                         .catch((err) => {
                           res.status(500).json({ msg: err });
@@ -176,14 +198,13 @@ Authcontroller.login = (req, res) => {
               id: user._id,
               name: user.name,
               email: user.email,
-              first_login: user.first_login
+              first_login: user.first_login,
             };
 
             jsonwt.sign(payload, secret, { expiresIn: 3600 }, (err, token) => {
               res.json({
                 success: true,
                 token: token,
-
               });
             });
           } else {
@@ -202,10 +223,9 @@ Authcontroller.login = (req, res) => {
 };
 
 module.exports = {
-  
   EmailValidator,
   passwordMatcher,
   PasswordValidator,
 };
 
-module.exports=Authcontroller;
+module.exports = Authcontroller;

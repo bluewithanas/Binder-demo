@@ -17,6 +17,10 @@ import axios from "axios";
 import { BASE_URL } from "../../../config";
 import { AppContext } from "../../../Context/State";
 
+import Snackbar from "@material-ui/core/Snackbar";
+// import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from "@material-ui/icons/Close";
+
 const useStyles = makeStyles((theme) => ({
   root: {
     maxWidth: 345,
@@ -42,6 +46,37 @@ const useStyles = makeStyles((theme) => ({
 }));
 export default function UserCard({ key, data }) {
   const { GlobalState, setGlobalState } = useContext(AppContext);
+  const [snackPack, setSnackPack] = React.useState([]);
+  const [open, setOpen] = React.useState(false);
+  const [messageInfo, setMessageInfo] = React.useState(undefined);
+
+  React.useEffect(() => {
+    if (snackPack.length && !messageInfo) {
+      // Set a new snack when we don't have an active one
+      setMessageInfo({ ...snackPack[0] });
+      setSnackPack((prev) => prev.slice(1));
+      setOpen(true);
+    } else if (snackPack.length && messageInfo && open) {
+      // Close an active snack when a new one is added
+      setOpen(false);
+    }
+  }, [snackPack, messageInfo, open]);
+
+  // const handleClick = (message) => () => {
+  //   setSnackPack((prev) => [...prev, { message, key: new Date().getTime() }]);
+  // };
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setOpen(false);
+  };
+
+  const handleExited = () => {
+    setMessageInfo(undefined);
+  };
+
   const classes = useStyles();
   const [expanded, setExpanded] = React.useState(false);
 
@@ -61,7 +96,12 @@ export default function UserCard({ key, data }) {
       },
     })
       .then((response) => {
-        console.log(response);
+        console.log(response, "connection sent response is here");
+        let message = response.data.msg;
+        setSnackPack((prev) => [
+          ...prev,
+          { message, key: new Date().getTime() },
+        ]);
       })
       .catch((err) => {
         console.log(err);
@@ -70,6 +110,34 @@ export default function UserCard({ key, data }) {
 
   return (
     <Card style={{ width: "100%" }}>
+      <Snackbar
+        key={messageInfo ? messageInfo.key : undefined}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        open={open}
+        autoHideDuration={6000}
+        onClose={handleClose}
+        onExited={handleExited}
+        message={messageInfo ? messageInfo.message : undefined}
+        action={
+          <React.Fragment>
+            {/* <Button color="secondary" size="small" onClick={handleClose}>
+              UNDO
+            </Button> */}
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              className={classes.close}
+              onClick={handleClose}
+            >
+              <CloseIcon />
+            </IconButton>
+          </React.Fragment>
+        }
+      />
+
       <CardHeader
         avatar={
           <Avatar aria-label="recipe" className={classes.avatar}>
